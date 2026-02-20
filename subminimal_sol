@@ -1,0 +1,27 @@
+import pandas as pd
+import interview_prep as H  # <-- your helper module name
+
+path = "case.xlsx"
+
+# 1) Load UPB arrays from the required sheets/column
+df_pop = pd.read_excel(path, sheet_name="population")
+df_samp = pd.read_excel(path, sheet_name="sample")
+pop = pd.to_numeric(df_pop["UPB"], errors="coerce").values
+samp = pd.to_numeric(df_samp["UPB"], errors="coerce").values
+
+# 2) Run chi-square
+res = H._chi_square_upb(pop, samp, bin_strategy="fd", min_expected=5.0)
+
+# 3) Interpret
+alpha = 0.05
+p = res["p_value"]
+print(f"p-value={p:.4g}, alpha={alpha}")
+
+if p < alpha:
+    print("Conclusion: sample looks DIFFERENT from population (possible bias in UPB).")
+    # 4) Show where it differs (top bins)
+    print(res["summary"].sort_values("chi2_contrib", ascending=False).head(5)[
+        ["bin_low","bin_high","expected","observed","obs_minus_exp","chi2_contrib"]
+    ])
+else:
+    print("Conclusion: no evidence sample differs from population (UPB looks representative).")
